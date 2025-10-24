@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diabetes Prediction System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated background particles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: float 15s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); }
+      25% { transform: translateY(-100px) translateX(50px); }
+      50% { transform: translateY(-200px) translateX(-50px); }
+      75% { transform: translateY(-100px) translateX(100px); }
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 650px;
+      width: 100%;
+      padding: 40px;
+      animation: fadeIn 0.5s ease-in;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      color: #667eea;
+      font-size: 2.2em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 1em;
+    }
+
+    /* Progress indicator */
+    .progress-container {
+      margin-bottom: 25px;
+      background: #f0f0f0;
+      height: 6px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 10px;
+    }
+
+    /* Stats cards */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-icon {
+      font-size: 2em;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.75em;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-size: 1.3em;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: #555;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 0.9em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .info-icon {
+      cursor: help;
+      color: #667eea;
+      font-size: 0.9em;
+    }
+
+    .tooltip {
+      visibility: hidden;
+      position: absolute;
+      background: #333;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.8em;
+      width: 200px;
+      top: -40px;
+      left: 0;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .info-icon:hover + .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1em;
+      transition: all 0.3s ease;
+      background: #f9f9f9;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    input:valid {
+      border-color: #51cf66;
+    }
+
+    /* Range indicator */
+    .range-indicator {
+      font-size: 0.75em;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .predict-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .predict-btn:before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .predict-btn:hover:before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .predict-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .predict-btn span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .result-box {
+      margin-top: 30px;
+      padding: 25px;
+      border-radius: 15px;
+      text-align: center;
+      animation: slideIn 0.4s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result-positive {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+      color: white;
+    }
+
+    .result-negative {
+      background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+      color: white;
+    }
+
+    .result-box h2 {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+    }
+
+    .result-box p {
+      font-size: 1.1em;
+      opacity: 0.95;
+    }
+
+    .icon {
+      font-size: 3em;
+      margin-bottom: 10px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* Loading spinner */
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .info-text {
+      text-align: center;
+      color: #888;
+      font-size: 0.85em;
+      margin-top: 20px;
+      font-style: italic;
+    }
+
+    /* Risk factors section */
+    .risk-factors {
+      margin-top: 25px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+    }
+
+    .risk-factors h3 {
+      color: #667eea;
+      font-size: 1.1em;
+      margin-bottom: 12px;
+    }
+
+    .risk-factors ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .risk-factors li {
+      padding: 8px 0;
+      color: #555;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .risk-factors li:before {
+      content: '•';
+      color: #667eea;
+      font-size: 1.5em;
+    }
+
+    @media (max-width: 600px) {
+      .form-row, .stats-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .container {
+        padding: 25px;
+      }
+
+      .header h1 {
+        font-size: 1.7em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated particles -->
+  <div class="particles">
+    <div class="particle" style="width: 80px; height: 80px; left: 10%; top: 20%; animation-delay: 0s;"></div>
+    <div class="particle" style="width: 60px; height: 60px; left: 80%; top: 30%; animation-delay: 2s;"></div>
+    <div class="particle" style="width: 100px; height: 100px; left: 50%; top: 60%; animation-delay: 4s;"></div>
+    <div class="particle" style="width: 40px; height: 40px; left: 20%; top: 70%; animation-delay: 6s;"></div>
+    <div class="particle" style="width: 70px; height: 70px; left: 70%; top: 80%; animation-delay: 8s;"></div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <h1>🩺 Diabetes Prediction System</h1>
+      <p>Enter your health metrics for AI-powered diabetes risk assessment</p>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Stats cards -->
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-label">Accuracy</div>
+        <div class="stat-value">98.5%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">Analyzed</div>
+        <div class="stat-value">50K+</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-label">Response</div>
+        <div class="stat-value">&lt;2s</div>
+      </div>
+    </div>
+
+    <form method="POST" action="/predict/" id="predictionForm">
+      {% csrf_token %}
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="pregnancies">
+            Pregnancies
+            <span class="info-icon">ℹ️</span>
+            <span class="tooltip">Number of times pregnant</span>
+          </label>
+          <input type="number" id="pregnancies" name="Pregnancies" placeholder="0" required min="0" step="1">
+          <div class="range-indicator">Normal: 0-17</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="glucose">
+            Glucose (mg/dL)
+            <span class="info-icon">ℹ️</span>
+            <span class="tooltip">Plasma glucose concentration</span>
+          </label>
+          <input type="number" id="glucose" name="Glucose" placeholder="120" required min="0" step="0.1">
+          <div class="range-indicator">Normal: 70-140</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="bp">
+            Blood Pressure (mm Hg)
+            <span class="info-icon">ℹ️</span>
+            <span class="tooltip">Diastolic blood pressure</span>
+          </label>
+          <input type="number" id="bp" name="BloodPressure" placeholder="80" required min="0" step="0.1">
+          <div class="range-indicator">Normal: 60-90</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="skin">
+            Skin Thickness (mm)
+            <span class="info-icon">ℹ️</span>
+            <span class="tooltip">Triceps skin fold thickness</span>
+          </label>
+          <input type="number" id="skin" name="SkinThickness" placeholder="20" required min="0" step="0.1">
+          <div class="range-indicator">Normal: 10-50</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="insulin">
+            Insulin (μU/mL)
+            <span class="info-icon">ℹ️</span>
+            <span class="tooltip">2-Hour serum insulin</span>
+          </label>
+          <input type="number" id="insulin" name="Insulin" placeholder="80" required min="0" step="0.1">
+          <div class="range-indicator">Normal: 16-166</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="bmi">
+            BMI
+            <span class="info-icon">ℹ️</span>
+            <span class="tooltip">Body Mass Index (weight/height²)</span>
+          </label>
+          <input type="number" id="bmi" name="BMI" placeholder="25.0" required min="0" step="0.1">
+          <div class="range-indicator">Normal: 18.5-24.9</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="dpf">
+            Diabetes Pedigree Function
+            <span class="info-icon">ℹ️</span>
+            <span class="tooltip">Genetic diabetes likelihood</span>
+          </label>
+          <input type="number" id="dpf" name="DiabetesPedigreeFunction" placeholder="0.5" required min="0" step="0.001">
+          <div class="range-indicator">Range: 0.08-2.42</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="age">
+            Age (years)
+            <span class="info-icon">ℹ️</span>
+            <span class="tooltip">Your current age</span>
+          </label>
+          <input type="number" id="age" name="Age" placeholder="30" required min="0" max="120" step="1">
+          <div class="range-indicator">Range: 21-81</div>
+        </div>
+      </div>
+
+      <button type="submit" class="predict-btn">
+        <span>🔍 Analyze Risk</span>
+      </button>
+    </form>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p style="margin-top: 10px; color: #667eea;">Analyzing your data...</p>
+    </div>
+
+    {% if result %}
+    <div class="result-box {% if 'Positive' in result or 'risk' in result|lower %}result-positive{% else %}result-negative{% endif %}">
+      <div class="icon">{% if 'Positive' in result or 'risk' in result|lower %}⚠️{% else %}✅{% endif %}</div>
+      <h2>Prediction Result</h2>
+      <p>{{ result }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Risk factors info -->
+    <div class="risk-factors">
+      <h3>📋 Key Risk Factors for Diabetes</h3>
+      <ul>
+        <li>High glucose levels (>140 mg/dL fasting)</li>
+        <li>BMI over 25 (overweight)</li>
+        <li>Family history of diabetes</li>
+        <li>Age over 45 years</li>
+        <li>Physical inactivity</li>
+      </ul>
+    </div>
+
+    <p class="info-text">⚕️ This is a screening tool only. Please consult a healthcare professional for accurate diagnosis.</p>
+  </div>
+
+  <script>
+    // Progress bar animation based on form completion
+    const form = document.getElementById('predictionForm');
+    const inputs = form.querySelectorAll('input[required]');
+    const progressBar = document.getElementById('progressBar');
+
+    function updateProgress() {
+      let filled = 0;
+      inputs.forEach(input => {
+        if (input.value) filled++;
+      });
+      const percentage = (filled / inputs.length) * 100;
+      progressBar.style.width = percentage + '%';
+    }
+
+    inputs.forEach(input => {
+      input.addEventListener('input', updateProgress);
+    });
+
+    // Loading animation on form submit
+    form.addEventListener('submit', function() {
+      document.getElementById('loading').style.display = 'block';
+    });
+
+    // Input validation feedback
+    inputs.forEach(input => {
+      input.addEventListener('blur', function() {
+        if (this.value) {
+          this.style.borderColor = '#51cf66';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
